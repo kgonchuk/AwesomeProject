@@ -4,7 +4,9 @@ import React from "react";
 const ProfileScreen = () => {
   return (
     <View>
-      <Text>ProfileScreen</Text>
+      <Text style={{ alignItems: "center", marginTop: 100 }}>
+        ProfileScreen
+      </Text>
     </View>
   );
 };

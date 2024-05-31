@@ -83,6 +83,15 @@ const TabRoutes = () => {
         options={{
           headerShown: false,
           unmountOnBlur: true,
+          headerLeft: () => (
+            <TouchableOpacity onPress={onHandleBack}>
+              <Feather
+                name="arrow-left"
+                size="24"
+                style={{ paddingLeft: 16, color: "rgba(189, 189, 189, 1)" }}
+              />
+            </TouchableOpacity>
+          ),
         }}
       />
     </Tab.Navigator>
