@@ -1,10 +1,9 @@
 import { StyleSheet, View } from "react-native";
 import { useFonts } from "expo-font";
-import { PersistGate } from "redux-persist/integration/react";
-import { Provider } from "react-redux";
+// import { PersistGate } from "redux-persist/integration/react";
+// import { Provider } from "react-redux";
 
 import MainRoutes from "./routes/MainRoutes";
-import store from "./redux/store";
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -16,11 +15,9 @@ export default function App() {
     return null;
   }
   return (
-    <Provider store={store.store}>
-      <PersistGate loading={null} persistor={store.persistor}>
-        <MainRoutes />
-      </PersistGate>
-    </Provider>
+    <>
+      <MainRoutes />
+    </>
   );
 }
 

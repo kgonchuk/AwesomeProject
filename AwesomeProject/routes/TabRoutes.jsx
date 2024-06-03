@@ -6,6 +6,8 @@ import PostsScreen from "../screens/PostsScreen";
 import CreatePostsScreen from "../screens/CreatePostsScreen";
 import { useNavigation } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
+import { signOut } from "firebase/auth";
+import { auth } from "../firebase/config";
 
 const Tab = createBottomTabNavigator();
 
@@ -14,10 +16,13 @@ const TabRoutes = () => {
   const onHandleBack = () => {
     navigation.navigate("PostsScreen");
   };
-  const onHandleLogout = () => {
-    navigation.navigate("LogIn");
-  };
+  // const onHandleLogout = () => {
+  //   navigation.navigate("LogIn");
+  // };
 
+  const onHandleLogOut = async () => {
+    await signOut(auth);
+  };
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -49,7 +54,7 @@ const TabRoutes = () => {
           title: "Posts",
           unmountOnBlur: true,
           headerRight: () => (
-            <TouchableOpacity onPress={onHandleLogout}>
+            <TouchableOpacity onPress={onHandleLogOut}>
               <Feather
                 name="log-out"
                 size={24}

@@ -5,7 +5,7 @@ import {
   ImageBackground,
   TextInput,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import bg from "../assets/img/Photo BG.jpg";
 import CustomInput from "../componets/CustomInput";
 import CustomButton from "../componets/CustomButton";
@@ -13,8 +13,14 @@ import { useNavigation } from "@react-navigation/native";
 import { useForm } from "react-hook-form";
 import PasswordCustonInput from "../componets/CustomInput/PasswordCustonInput";
 import KeyboardAvoidingContainer from "../componets/KeyboardAvoidingContainer";
+import { auth } from "../firebase/config";
 
 const LoginScreen = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const auth = auth;
+
   const {
     control,
     handleSubmit,
@@ -45,6 +51,7 @@ const LoginScreen = () => {
                 placeholder="Адреса електронної пошти"
                 control={control}
                 rules={{ required: "User name is required" }}
+                value={email}
               />
               <PasswordCustonInput
                 name="pasword"

@@ -1,22 +1,51 @@
-import { View, Text, StyleSheet, ImageBackground, Image } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ImageBackground,
+  Image,
+  Button,
+  TextInput,
+} from "react-native";
 import React, { useState } from "react";
 import bg from "../assets/img/Photo BG.jpg";
-import CustomInput from "../componets/CustomInput";
+// import CustomInput from "../componets/CustomInput";
 import CustomButton from "../componets/CustomButton";
 import { useNavigation } from "@react-navigation/native";
-import { useForm } from "react-hook-form";
+// import { useForm } from "react-hook-form";
 import plus from "../assets/img/add.png";
 import KeyboardAvoidingContainer from "../componets/KeyboardAvoidingContainer";
-import PasswordCustonInput from "../componets/CustomInput/PasswordCustonInput";
+// import PasswordCustonInput from "../componets/CustomInput/PasswordCustonInput";
+// import { TextInput } from "react-native-gesture-handler";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../firebase/config";
 
-const RAGEX_EMAIL =
-  /^[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*@[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*$/;
+// const RAGEX_EMAIL =
+//   /^[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*@[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*$/;
 
 const RegistrationScreen = () => {
-  const [isVisiblePassword, setIsvisiblePassword] = useState(false);
+  // const [isVisiblePassword, setIsvisiblePassword] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const navigation = useNavigation();
-  const { control, handleSubmit } = useForm();
+  // const { control, handleSubmit } = useForm();
+
+  const handleSubmit = async () => {
+    if (email && password) {
+      try {
+        await createUserWithEmailAndPassword(
+          auth,
+
+          email,
+          password
+        );
+      } catch (error) {
+        console.log("got an error", error.message);
+      }
+    }
+  };
 
   const onSingInPress = () => {
     console.warn("SingIn Wellcome");
@@ -34,7 +63,22 @@ const RegistrationScreen = () => {
             <Text style={styles.text}>Реєстрація</Text>
             <Image style={styles.photo} />
             <Image source={plus} style={styles.photoPlus} />
-            <CustomInput
+            {/* <TextInput
+              placeholder="Login"
+              value={displayName}
+              onChangeText={(value) => setDisplayName(value)}
+            /> */}
+            <TextInput
+              placeholder="Email"
+              value={email}
+              onChangeText={(value) => setEmail(value)}
+            />
+            <TextInput
+              placeholder="Password"
+              value={password}
+              onChangeText={(value) => setPassword(value)}
+            />
+            {/* <CustomInput
               name="userName"
               placeholder="Логін"
               control={control}
@@ -50,8 +94,8 @@ const RegistrationScreen = () => {
                   message: "User name shoud be max 24 characters long",
                 },
               }}
-            />
-            <CustomInput
+            /> */}
+            {/* <CustomInput
               name="userMail"
               placeholder="Адреса електронної пошти"
               control={control}
@@ -59,8 +103,8 @@ const RegistrationScreen = () => {
                 required: "User mail is required",
                 pattern: { value: RAGEX_EMAIL, message: "Email is not valid" },
               }}
-            />
-            <PasswordCustonInput
+            /> */}
+            {/* <PasswordCustonInput
               name="pasword"
               control={control}
               placeholder="Пароль"
@@ -71,12 +115,13 @@ const RegistrationScreen = () => {
                   message: "Password shoud be min 3 characters",
                 },
               }}
-            />
-            <CustomButton
+            /> */}
+            <Button title="Зареєстуватися" onPress={handleSubmit} />
+            {/* <CustomButton
               text="Зареєстуватися"
               type="PRIMARY"
               onPress={handleSubmit(onSingUpPress)}
-            />
+            /> */}
             <CustomButton
               text="Вже є акаунт? Увійти"
               type="TERTTIARY"

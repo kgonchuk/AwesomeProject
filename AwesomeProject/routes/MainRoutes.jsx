@@ -10,29 +10,43 @@ import RegistrationScreen from "../screens/RegistrationScreen";
 import PostsScreen from "../screens/PostsScreen";
 import TabRoutes from "./TabRoutes";
 import MapScreen from "../screens/MapScreen";
+import useAuth from "../hooks/useAuth";
 
 const Stack = createNativeStackNavigator();
 
 const MainRoutes = () => {
-  return (
-    <NavigationContainer>
-      <Stack.Navigator
-        initialRouteName="LogIn"
-        screenOptions={{ headerShown: false }}
-      >
-        <Stack.Screen name="LogIn" component={LoginScreen} />
-        <Stack.Screen name="Registration" component={RegistrationScreen} />
-        <Stack.Screen
-          name="Home"
-          component={TabRoutes}
-          options={{
-            headerShown: false,
-          }}
-        />
-        <Stack.Screen name="Map" component={MapScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
+  const { user } = useAuth();
+  if (user) {
+    return (
+      <NavigationContainer>
+        <Stack.Navigator
+          initialRouteName="Home"
+          screenOptions={{ headerShown: false }}
+        >
+          <Stack.Screen
+            name="Home"
+            component={TabRoutes}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen name="Map" component={MapScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
+  } else {
+    return (
+      <NavigationContainer>
+        <Stack.Navigator
+          initialRouteName="LogIn"
+          screenOptions={{ headerShown: false }}
+        >
+          <Stack.Screen name="LogIn" component={LoginScreen} />
+          <Stack.Screen name="Registration" component={RegistrationScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    );
+  }
 };
 
 export default MainRoutes;
