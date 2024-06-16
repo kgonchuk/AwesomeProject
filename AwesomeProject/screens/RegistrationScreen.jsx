@@ -6,127 +6,204 @@ import {
   Image,
   Button,
   TextInput,
+  TouchableOpacity,
 } from "react-native";
 import React, { useState } from "react";
 import bg from "../assets/img/Photo BG.jpg";
-// import CustomInput from "../componets/CustomInput";
+
 import CustomButton from "../componets/CustomButton";
 import { useNavigation } from "@react-navigation/native";
-// import { useForm } from "react-hook-form";
+
 import plus from "../assets/img/add.png";
 import KeyboardAvoidingContainer from "../componets/KeyboardAvoidingContainer";
-// import PasswordCustonInput from "../componets/CustomInput/PasswordCustonInput";
-// import { TextInput } from "react-native-gesture-handler";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase/config";
 
-// const RAGEX_EMAIL =
-//   /^[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*@[a-zA-Z0-9]+(?:\.[a-zA-Z0-9]+)*$/;
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import {
+  getStorage,
+  ref,
+  uploadBytesResumable,
+  getDownloadURL,
+  uploadBytes,
+} from "firebase/storage";
+import { doc, setDoc } from "firebase/firestore";
+
+import { auth } from "../firebase/config";
+import { storage } from "../firebase/config";
+import * as ImagePicker from "expo-image-picker";
 
 const RegistrationScreen = () => {
-  // const [isVisiblePassword, setIsvisiblePassword] = useState(false);
   const [displayName, setDisplayName] = useState("");
+  const [img, setImg] = useState("");
   const [email, setEmail] = useState("");
+  const [isEmailValid, setEmailValid] = useState(true);
   const [password, setPassword] = useState("");
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+  const [loginFocused, setLoginFocused] = useState(false);
+  const [showPassword, setShowPassword] = useState(true);
+  const [showPassText, setShowPassText] = useState("Показати");
+  const [permission, setPermission] = useState(null);
+  const [photoURL, setPhotoURL] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const navigation = useNavigation();
-  // const { control, handleSubmit } = useForm();
 
   const handleSubmit = async () => {
-    if (email && password) {
-      try {
-        await createUserWithEmailAndPassword(
-          auth,
+    if (!displayName && !email && !password) {
+      return Alert.alert("Помилка", "Заповніть форму цілком");
+    }
 
-          email,
-          password
-        );
-      } catch (error) {
-        console.log("got an error", error.message);
-      }
+    if (!isEmailValid) {
+      return Alert.alert(
+        "Помилка",
+        "Введіть коректну адресу електронної пошти"
+      );
+    }
+
+    if (password.length < 6) {
+      return Alert.alert("Помилка", "Пароль меє містити від 6ти символів");
+    }
+
+    console.log(
+      ` Login: "${displayName}"; Email: "${email}"; Password "${password}"`
+    );
+
+    setLoading(true);
+    try {
+      const res = await createUserWithEmailAndPassword(auth, email, password);
+
+      const response = await fetch(photoURL);
+
+      const blob = await response.blob();
+
+      const storageRef = ref(storage, "img");
+      uploadBytes(storageRef, img).then((snapshot) => {
+        console.log("Uploaded a blob or file!");
+      });
+    } catch (error) {
+      console.log(error);
     }
   };
 
-  const onSingInPress = () => {
-    console.warn("SingIn Wellcome");
-    navigation.navigate("LogIn");
+  const handleEmailChange = (text) => {
+    setEmail(text);
+    setEmailValid(validateEmail(text));
   };
-  const onSingUpPress = () => {
-    console.warn("SingUp wellcome");
-    navigation.navigate("Home");
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   };
+  const showPass = () => {
+    setShowPassword(!showPassword);
+    setShowPassText(!showPassword ? "Показати" : "Скрити");
+  };
+
+  const onImagePick = async () => {
+    const status = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    setPermission(status.status === "granted");
+
+    if (status.status !== "granted") {
+      Alert.alert("Помилка", "Дозвіл на доступ до медіатеки не надано.");
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    setPhotoURL(result.assets[0].uri);
+  };
+
+  const onDeletePhoto = () => {
+    setPhotoURL("");
+  };
+
   return (
     <KeyboardAvoidingContainer>
       <View style={styles.container}>
         <ImageBackground source={bg} style={styles.img}>
           <View style={styles.customContainer}>
+            <View>
+              {photoURL ? (
+                <TouchableOpacity onPress={() => onDeletePhoto()}>
+                  <Image source={{ uri: photoURL }} style={styles.photo} />
+
+                  <Image
+                    source={require("../assets/img/cross.png")}
+                    style={styles.photoCross}
+                  />
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  style={styles.photo}
+                  onPress={() => onImagePick()}
+                >
+                  <Image
+                    source={require("../assets/img/plus.png")}
+                    style={styles.photoPlus}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
             <Text style={styles.text}>Реєстрація</Text>
-            <Image style={styles.photo} />
-            <Image source={plus} style={styles.photoPlus} />
-            {/* <TextInput
-              placeholder="Login"
-              value={displayName}
-              onChangeText={(value) => setDisplayName(value)}
-            /> */}
+
             <TextInput
-              placeholder="Email"
-              value={email}
-              onChangeText={(value) => setEmail(value)}
-            />
-            <TextInput
-              placeholder="Password"
-              value={password}
-              onChangeText={(value) => setPassword(value)}
-            />
-            {/* <CustomInput
-              name="userName"
+              type="text"
               placeholder="Логін"
-              control={control}
-              type={isVisiblePassword ? "text" : "password"}
-              rules={{
-                required: "User name is required",
-                minLength: {
-                  value: 3,
-                  message: "User name shoud be min 3 characters long",
-                },
-                maxLength: {
-                  value: 24,
-                  message: "User name shoud be max 24 characters long",
-                },
-              }}
-            /> */}
-            {/* <CustomInput
-              name="userMail"
-              placeholder="Адреса електронної пошти"
-              control={control}
-              rules={{
-                required: "User mail is required",
-                pattern: { value: RAGEX_EMAIL, message: "Email is not valid" },
-              }}
-            /> */}
-            {/* <PasswordCustonInput
-              name="pasword"
-              control={control}
-              placeholder="Пароль"
-              rules={{
-                required: "Passsword name is required",
-                minLength: {
-                  value: 3,
-                  message: "Password shoud be min 3 characters",
-                },
-              }}
-            /> */}
-            <Button title="Зареєстуватися" onPress={handleSubmit} />
-            {/* <CustomButton
-              text="Зареєстуватися"
-              type="PRIMARY"
-              onPress={handleSubmit(onSingUpPress)}
-            /> */}
-            <CustomButton
-              text="Вже є акаунт? Увійти"
-              type="TERTTIARY"
-              onPress={onSingInPress}
+              required
+              style={[
+                styles.formItem,
+                loginFocused ? styles.formItemFocused : null,
+              ]}
+              value={displayName}
+              onChangeText={setDisplayName}
+              onFocus={() => setLoginFocused(true)}
+              onBlur={() => setLoginFocused(false)}
             />
+            <TextInput
+              type="email"
+              placeholder="Адреса електронної пошти"
+              required
+              style={[
+                styles.formItem,
+                emailFocused ? styles.formItemFocused : null,
+              ]}
+              value={email}
+              onChangeText={handleEmailChange}
+              onFocus={() => setEmailFocused(true)}
+              onBlur={() => setEmailFocused(false)}
+            />
+            <TextInput
+              type="password"
+              placeholder="Пароль"
+              required
+              style={[
+                styles.formItem,
+                passwordFocused ? styles.formItemFocused : null,
+              ]}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={showPassword}
+              onFocus={() => setPasswordFocused(true)}
+              onBlur={() => setPasswordFocused(false)}
+            />
+            <TouchableOpacity style={styles.showPass} onPress={showPass}>
+              <Text style={styles.showPassText}>{showPassText}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.formBtn} onPress={handleSubmit}>
+              <Text style={styles.formBtnText}>Зареєстуватися</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.nav}
+              onPress={() => navigation.navigate("LogIn")}
+            >
+              <Text style={styles.navText}>Вже є акаунт? Увійти</Text>
+            </TouchableOpacity>
           </View>
         </ImageBackground>
       </View>
@@ -181,6 +258,63 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 20,
     left: 255,
+  },
+  form: {
+    marginTop: 32,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 16,
+    marginHorizontal: 16,
+  },
+  formItem: {
+    width: "100%",
+    fontFamily: "Roboto-Regular",
+    color: "#000",
+    fontSize: 16,
+    backgroundColor: "#F6F6F6",
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "#E8E8E8",
+    borderRadius: 5,
+  },
+  formItemFocused: {
+    backgroundColor: "#fff",
+    borderColor: "#FF6C00",
+  },
+  formBtn: {
+    width: "100%",
+    paddingVertical: 16,
+    paddingHorizontal: 111.5,
+    backgroundColor: "#FF6C00",
+    borderRadius: 100,
+    marginTop: 27,
+    textAlign: "center",
+  },
+  formBtnText: {
+    fontSize: 16,
+    fontFamily: "Roboto-Regular",
+    color: "#fff",
+  },
+  showPass: {
+    position: "absolute",
+    top: "55%",
+    right: 16,
+  },
+  showPassText: {
+    fontSize: 16,
+    color: "#1B4371",
+    fontFamily: "Roboto-Regular",
+    fontStyle: "normal",
+  },
+  nav: {
+    marginTop: 32,
+  },
+  navText: {
+    textAlign: "center",
+    fontSize: 16,
+    color: "#1B4371",
+    fontFamily: "Roboto-Regular",
   },
 });
 
