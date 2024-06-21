@@ -34,6 +34,7 @@ const UserProfile = () => {
   const [photo, setPhoto] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [photoLocation, setPhotoLocation] = useState("");
+
   const [posts, setPosts] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const isFocused = useIsFocused();
@@ -50,6 +51,7 @@ const UserProfile = () => {
       setPhoto(user.photoURL);
       setUserEmail(user.email);
       setPhotoLocation(user.photoLocation);
+
       const q = query(
         collection(db, "usersPosts"),
         where("displayName", "==", user.displayName)

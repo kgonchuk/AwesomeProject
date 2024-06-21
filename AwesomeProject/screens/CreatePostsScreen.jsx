@@ -281,6 +281,7 @@ const CreatePostsScreen = () => {
               style={[styles.inputText, { paddingLeft: 25 }]}
               placeholder="Місцевість..."
               placeholderTextColor="#BDBDBD"
+              type="text"
               value={photoLocation}
               onChangeText={setPhotoLocation}
             ></TextInput>
