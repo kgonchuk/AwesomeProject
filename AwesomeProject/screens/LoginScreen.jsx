@@ -6,24 +6,19 @@ import {
   TextInput,
   TouchableOpacity,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import bg from "../assets/img/Photo BG.jpg";
-import CustomInput from "../componets/CustomInput";
-import CustomButton from "../componets/CustomButton";
 import { useNavigation } from "@react-navigation/native";
-import { useForm } from "react-hook-form";
-import PasswordCustonInput from "../componets/CustomInput/PasswordCustonInput";
 import KeyboardAvoidingContainer from "../componets/KeyboardAvoidingContainer";
 import { auth } from "../firebase/config";
 
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { useDispatch } from "react-redux";
 
 const LoginScreen = () => {
-  const dispatch = useDispatch();
   const navigation = useNavigation();
 
   const [email, setEmail] = useState("");
+  const [isEmailValid, setEmailValid] = useState(true);
   const [password, setPassword] = useState("");
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
@@ -46,7 +41,7 @@ const LoginScreen = () => {
     setShowPassText(!showPassword ? "Показати" : "Скрити");
   };
 
-  const onSingInPress = () => {
+  const onSingInPress = async () => {
     if (!email ?? !password) {
       alert("Заповніть всі плоля");
     }
@@ -57,29 +52,11 @@ const LoginScreen = () => {
       );
     }
     console.log(`Email: "${email}"; Password "${password}"`);
-
-    signInWithEmailAndPassword(auth, email, password)
-      .then((response) => {
-        console.log(response.user);
-        dispatch(
-          logIn({
-            displayName: response.user.displayName,
-            photoURL: response.user.photoURL,
-            email: response.user.email,
-            uid: response.user.uid,
-          })
-        );
-        navigation.navigate("Home");
-        setLoading(false);
-      })
-      .catch(() => {
-        Alert.alert("Помилка", "Логін чи пароль невірні");
-      });
-
-    setEmail("");
-    setPassword("");
-    setShowPassword(true);
-    setShowPassText("Показати");
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   return (

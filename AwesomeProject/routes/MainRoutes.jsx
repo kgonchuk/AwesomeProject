@@ -8,6 +8,7 @@ import { ButtonNavigationIcon } from "../componets/ButtonNavIcon";
 import LoginScreen from "../screens/LoginScreen";
 import RegistrationScreen from "../screens/RegistrationScreen";
 import PostsScreen from "../screens/PostsScreen";
+import CommentsScreen from "../screens/CommentsScreen";
 import TabRoutes from "./TabRoutes";
 import MapScreen from "../screens/MapScreen";
 import useAuth from "../hooks/useAuth";
@@ -31,6 +32,7 @@ const MainRoutes = () => {
             }}
           />
           <Stack.Screen name="Map" component={MapScreen} />
+          <Stack.Screen name="Comment" component={CommentsScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     );

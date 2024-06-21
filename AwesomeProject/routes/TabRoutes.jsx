@@ -51,7 +51,7 @@ const TabRoutes = () => {
         name="PostsScreen"
         component={PostsScreen}
         options={{
-          title: "Posts",
+          title: "Публікації",
           unmountOnBlur: true,
           headerRight: () => (
             <TouchableOpacity onPress={onHandleLogOut}>

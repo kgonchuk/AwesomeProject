@@ -7,33 +7,26 @@ import {
   Button,
   TextInput,
   TouchableOpacity,
+  Keyboard,
+  Animated,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import bg from "../assets/img/Photo BG.jpg";
-
-import CustomButton from "../componets/CustomButton";
 import { useNavigation } from "@react-navigation/native";
-
-import plus from "../assets/img/add.png";
-import KeyboardAvoidingContainer from "../componets/KeyboardAvoidingContainer";
-
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import {
-  getStorage,
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-  uploadBytes,
-} from "firebase/storage";
+import { uploadBytesResumable, ref, getDownloadURL } from "firebase/storage";
+import { auth, db, storage } from "./../firebase/config";
 import { doc, setDoc } from "firebase/firestore";
-
-import { auth } from "../firebase/config";
-import { storage } from "../firebase/config";
 import * as ImagePicker from "expo-image-picker";
+import { useDispatch } from "react-redux";
+import { register } from "../redux/authSlice";
 
 const RegistrationScreen = () => {
+  const dispatch = useDispatch();
+  const [position] = useState(new Animated.Value(0));
   const [displayName, setDisplayName] = useState("");
-  const [img, setImg] = useState("");
   const [email, setEmail] = useState("");
   const [isEmailValid, setEmailValid] = useState(true);
   const [password, setPassword] = useState("");
@@ -45,45 +38,9 @@ const RegistrationScreen = () => {
   const [permission, setPermission] = useState(null);
   const [photoURL, setPhotoURL] = useState("");
   const [loading, setLoading] = useState(false);
+  const [shift, setShift] = useState(false);
 
   const navigation = useNavigation();
-
-  const handleSubmit = async () => {
-    if (!displayName && !email && !password) {
-      return Alert.alert("Помилка", "Заповніть форму цілком");
-    }
-
-    if (!isEmailValid) {
-      return Alert.alert(
-        "Помилка",
-        "Введіть коректну адресу електронної пошти"
-      );
-    }
-
-    if (password.length < 6) {
-      return Alert.alert("Помилка", "Пароль меє містити від 6ти символів");
-    }
-
-    console.log(
-      ` Login: "${displayName}"; Email: "${email}"; Password "${password}"`
-    );
-
-    setLoading(true);
-    try {
-      const res = await createUserWithEmailAndPassword(auth, email, password);
-
-      const response = await fetch(photoURL);
-
-      const blob = await response.blob();
-
-      const storageRef = ref(storage, "img");
-      uploadBytes(storageRef, img).then((snapshot) => {
-        console.log("Uploaded a blob or file!");
-      });
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
   const handleEmailChange = (text) => {
     setEmail(text);
@@ -118,12 +75,121 @@ const RegistrationScreen = () => {
     setPhotoURL(result.assets[0].uri);
   };
 
+  const onRegister = async () => {
+    if (!displayName && !email && !password) {
+      return Alert.alert("Помилка", "Заповніть форму цілком");
+    }
+
+    if (!isEmailValid) {
+      return Alert.alert(
+        "Помилка",
+        "Введіть коректну адресу електронної пошти"
+      );
+    }
+
+    if (password.length < 6) {
+      return Alert.alert("Помилка", "Пароль меє містити від 6ти символів");
+    }
+
+    console.log(
+      `Photo: ${photoURL}; Login: "${displayName}"; Email: "${email}"; Password "${password}"`
+    );
+
+    setLoading(true);
+    try {
+      const res = await createUserWithEmailAndPassword(auth, email, password);
+
+      const response = await fetch(photoURL);
+
+      const blob = await response.blob();
+
+      const storageRef = ref(storage, displayName);
+
+      const uploadTask = uploadBytesResumable(storageRef, blob);
+
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          const proress =
+            (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          console.log("Progress", proress);
+        },
+        (error) => {
+          console.log(error);
+        },
+        () => {
+          getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
+            await updateProfile(res.user, {
+              displayName,
+              photoURL: downloadURL,
+            });
+            await setDoc(doc(db, "users", res.user.uid), {
+              uid: res.user.uid,
+              displayName,
+              email,
+              photoURL: downloadURL,
+              posts: [],
+            });
+            await dispatch(
+              register({
+                displayName: displayName,
+                photoURL: downloadURL,
+                email: email,
+                uid: res.user.uid,
+                posts: [],
+              })
+            );
+
+            navigation.navigate("Home");
+
+            setLoading(false);
+          });
+        }
+      );
+    } catch (error) {
+      console.log(error);
+    }
+
+    setDisplayName("");
+    setEmail("");
+    setPhotoURL("");
+    setPassword("");
+    setShowPassword(true);
+    setShowPassText("Показати");
+    setPasswordFocused(false);
+    setEmailFocused(false);
+    s;
+  };
+
   const onDeletePhoto = () => {
     setPhotoURL("");
   };
+  useEffect(() => {
+    const listenerShow = Keyboard.addListener("keyboardDidShow", () => {
+      setShift(true);
+    });
+    const listenerHide = Keyboard.addListener("keyboardDidHide", () => {
+      setShift(false);
+    });
+    return () => {
+      listenerShow.remove();
+      listenerHide.remove();
+    };
+  }, []);
+
+  useEffect(() => {
+    Animated.timing(position, {
+      toValue: shift ? 130 : 50,
+      duration: 300,
+      useNativeDriver: false,
+    }).start();
+  }, [shift]);
 
   return (
-    <KeyboardAvoidingContainer>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       <View style={styles.container}>
         <ImageBackground source={bg} style={styles.img}>
           <View style={styles.customContainer}>
@@ -194,7 +260,7 @@ const RegistrationScreen = () => {
             <TouchableOpacity style={styles.showPass} onPress={showPass}>
               <Text style={styles.showPassText}>{showPassText}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.formBtn} onPress={handleSubmit}>
+            <TouchableOpacity style={styles.formBtn} onPress={onRegister}>
               <Text style={styles.formBtnText}>Зареєстуватися</Text>
             </TouchableOpacity>
 
@@ -207,7 +273,7 @@ const RegistrationScreen = () => {
           </View>
         </ImageBackground>
       </View>
-    </KeyboardAvoidingContainer>
+    </KeyboardAvoidingView>
   );
 };
 const styles = StyleSheet.create({
